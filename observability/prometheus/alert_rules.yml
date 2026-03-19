@@ -1,0 +1,32 @@
+groups:
+  - name: security_alerts
+    rules:
+      # Alert if any user exceeds 50 requests per minute
+      - alert: AnomalousRequestRate
+        expr: rate(vault_api_requests_total[1m]) * 60 > 50
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Anomalous request rate detected"
+          description: "User is making more than 50 requests/minute"
+
+      # Alert if error rate exceeds 10%
+      - alert: HighErrorRate
+        expr: |
+          rate(vault_api_requests_total{status=~"4..|5.."}[5m]) /
+          rate(vault_api_requests_total[5m]) > 0.10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate"
+          description: "More than 10% of requests are failing"
+
+      # Alert on any access denial
+      - alert: AccessDenied
+        expr: increase(vault_api_anomaly_alerts_total[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Access denied events detected"
